@@ -3,28 +3,29 @@ This script will use the 2D box from the label rather than from YOLO,
 but will still use the neural nets to get the 3D position and plot onto the
 image. Press space for next image and escape to quit
 """
-from torch_lib.Dataset import *
-from library.Math import *
-from library.Plotting import *
-from torch_lib import Model, ClassAverages
 
 import os
-import cv2
+import sys
 import time
-
-import torch
-import torch.nn as nn
-from torch.autograd import Variable
-from torchvision.models import vgg
+import cv2
 import numpy as np
 
+import torch
+from torchvision.models import vgg
+from torch_lib.Dataset import Dataset
+from torch_lib import Model, ClassAverages
+from library.Math import calc_location
+from library.Plotting import plot_2d_box, plot_3d_box
+
+
+
 # to run car by car
-single_car = False
+CAR = False
 
 def plot_regressed_3d_bbox(img, truth_img, cam_to_img, box_2d, dimensions, alpha, theta_ray):
-
+    """ plots regressed 3d box """
     # the math! returns X, the corners used for constraint
-    location, X = calc_location(dimensions, cam_to_img, box_2d, alpha, theta_ray)
+    location, [] = calc_location(dimensions, cam_to_img, box_2d, alpha, theta_ray)
 
     orient = alpha + theta_ray
 
@@ -34,14 +35,14 @@ def plot_regressed_3d_bbox(img, truth_img, cam_to_img, box_2d, dimensions, alpha
     return location
 
 def main():
-
+    """ main function """
     weights_path = os.path.abspath(os.path.dirname(__file__)) + '/weights'
     model_lst = [x for x in sorted(os.listdir(weights_path)) if x.endswith('.pkl')]
     if len(model_lst) == 0:
         print('No previous model found, please train first!')
-        exit()
+        sys.exit()
     else:
-        print ('Using previous model %s'%model_lst[-1])
+        print('Using previous model %s'%model_lst[-1])
         my_vgg = vgg.vgg19_bn(pretrained=True)
         model = Model.Model(features=my_vgg.features, bins=2).cuda()
         checkpoint = torch.load(weights_path + '/%s'%model_lst[-1])
@@ -64,13 +65,13 @@ def main():
         objects = data['Objects']
         cam_to_img = data['Calib']
 
-        for detectedObject in objects:
-            label = detectedObject.label
-            theta_ray = detectedObject.theta_ray
-            input_img = detectedObject.img
+        for det_obj in objects:
+            label = det_obj.label
+            theta_ray = det_obj.theta_ray
+            input_img = det_obj.img
 
-            input_tensor = torch.zeros([1,3,224,224]).cuda()
-            input_tensor[0,:,:,:] = input_img
+            input_tensor = torch.zeros([1, 3, 224, 224]).cuda()
+            input_tensor[0, :, :, :] = input_img
             input_tensor.cuda()
 
             [orient, conf, dim] = model(input_tensor)
@@ -88,14 +89,15 @@ def main():
             alpha += dataset.angle_bins[argmax]
             alpha -= np.pi
 
-            location = plot_regressed_3d_bbox(img, truth_img, cam_to_img, label['Box_2D'], dim, alpha, theta_ray)
+            location = plot_regressed_3d_bbox( \
+                img, truth_img, cam_to_img, label['Box_2D'], dim, alpha, theta_ray)
 
             print('Estimated pose: %s'%location)
             print('Truth pose: %s'%label['Location'])
             print('-------------')
 
             # plot car by car
-            if single_car:
+            if CAR:
                 numpy_vertical = np.concatenate((truth_img, img), axis=0)
                 cv2.imshow('2D detection on top, 3D prediction on bottom', numpy_vertical)
                 cv2.waitKey(0)
@@ -103,7 +105,7 @@ def main():
         print('Got %s poses in %.3f seconds\n'%(len(objects), time.time() - start_time))
 
         # plot image by image
-        if not single_car:
+        if not CAR:
             numpy_vertical = np.concatenate((truth_img, img), axis=0)
             cv2.imshow('2D detection on top, 3D prediction on bottom', numpy_vertical)
             if cv2.waitKey(0) == 27:
