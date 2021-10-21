@@ -1,23 +1,27 @@
-from torch_lib.Dataset import *
-from torch_lib.Model import Model, OrientationLoss
+"""
+This script will train the network
+"""
 
+import os
+
+from torch_lib.Dataset import Dataset
+from torch_lib.Model import Model, OrientationLoss
 
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 from torchvision.models import vgg
 from torch.utils import data
 
 
-import os
+
 
 def main():
-
+    """ main function """
     # hyper parameters
     epochs = 100
     batch_size = 8
     alpha = 0.6
-    w = 0.4
+    weight = 0.4
 
     print("Loading all detected objects in dataset...")
 
@@ -32,7 +36,7 @@ def main():
 
     my_vgg = vgg.vgg19_bn(pretrained=True)
     model = Model(features=my_vgg.features).cuda()
-    opt_SGD = torch.optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
+    opt_sgd = torch.optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
     conf_loss_func = nn.CrossEntropyLoss().cuda()
     dim_loss_func = nn.MSELoss().cuda()
     orient_loss_func = OrientationLoss
@@ -46,14 +50,14 @@ def main():
     else:
         try:
             latest_model = [x for x in sorted(os.listdir(model_path)) if x.endswith('.pkl')][-1]
-        except:
+        except ValueError:
             pass
 
 
     if latest_model is not None:
         checkpoint = torch.load(model_path + latest_model)
         model.load_state_dict(checkpoint['model_state_dict'])
-        opt_SGD.load_state_dict(checkpoint['optimizer_state_dict'])
+        opt_sgd.load_state_dict(checkpoint['optimizer_state_dict'])
         first_epoch = checkpoint['epoch']
         loss = checkpoint['loss']
 
@@ -73,7 +77,7 @@ def main():
             truth_conf = local_labels['Confidence'].long().cuda()
             truth_dim = local_labels['Dimensions'].float().cuda()
 
-            local_batch=local_batch.float().cuda()
+            local_batch = local_batch.float().cuda()
             [orient, conf, dim] = model(local_batch)
 
             orient_loss = orient_loss_func(orient, truth_orient, truth_conf)
@@ -82,16 +86,17 @@ def main():
             truth_conf = torch.max(truth_conf, dim=1)[1]
             conf_loss = conf_loss_func(conf, truth_conf)
 
-            loss_theta = conf_loss + w * orient_loss
+            loss_theta = conf_loss + weight * orient_loss
             loss = alpha * dim_loss + loss_theta
 
-            opt_SGD.zero_grad()
+            opt_sgd.zero_grad()
             loss.backward()
-            opt_SGD.step()
+            opt_sgd.step()
 
 
             if passes % 10 == 0:
-                print("--- epoch %s | batch %s/%s --- [loss: %s]" %(epoch, curr_batch, total_num_batches, loss.item()))
+                print("--- epoch {} | batch {}/{} --- [loss: {}]" \
+                    .format(epoch, curr_batch, total_num_batches, loss.item()))
                 passes = 0
 
             passes += 1
@@ -101,15 +106,15 @@ def main():
         if epoch % 10 == 0:
             name = model_path + 'epoch_%s.pkl' % epoch
             print("====================")
-            print ("Done with epoch %s!" % epoch)
-            print ("Saving weights as %s ..." % name)
-            torch.save({
-                    'epoch': epoch,
-                    'model_state_dict': model.state_dict(),
-                    'optimizer_state_dict': opt_SGD.state_dict(),
-                    'loss': loss
+            print("Done with epoch %s!" % epoch)
+            print("Saving weights as %s ..." % name)
+            torch.save({ \
+                    'epoch': epoch, \
+                    'model_state_dict': model.state_dict(), \
+                    'optimizer_state_dict': opt_sgd.state_dict(), \
+                    'loss': loss \
                     }, name)
             print("====================")
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()
