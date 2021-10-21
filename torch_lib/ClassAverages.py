@@ -1,22 +1,24 @@
-import numpy as np
+"""
+Class averages
+"""
 import os
 import json
+import numpy as np
 
 
-"""
-Enables writing json with numpy arrays to file
-"""
 class NumpyEncoder(json.JSONEncoder):
+    """ Enables writing json with numpy arrays to file """
     def default(self, obj):
+        """ default """
         if isinstance(obj, np.ndarray):
             return obj.tolist()
-        return json.JSONEncoder.default(self,obj)
+        return json.JSONEncoder.default(self, obj)
 
-"""
-Class will hold the average dimension for a class, regressed value is the residual
-"""
 class ClassAverages:
-    def __init__(self, classes=[]):
+    """ Class will hold the average dimension for a class, regressed value is the residual """
+    def __init__(self, classes=None):
+        if classes is None:
+            classes = []
         self.dimension_map = {}
         self.filename = os.path.abspath(os.path.dirname(__file__)) + '/class_averages.txt'
 
@@ -33,23 +35,27 @@ class ClassAverages:
 
 
     def add_item(self, class_, dimension):
+        """ Add item"""
         class_ = class_.lower()
         self.dimension_map[class_]['count'] += 1
         self.dimension_map[class_]['total'] += dimension
         # self.dimension_map[class_]['total'] /= self.dimension_map[class_]['count']
 
     def get_item(self, class_):
+        """ Get item """
         class_ = class_.lower()
         return self.dimension_map[class_]['total'] / self.dimension_map[class_]['count']
 
     def dump_to_file(self):
-        f = open(self.filename, "w")
-        f.write(json.dumps(self.dimension_map, cls=NumpyEncoder))
-        f.close()
+        """ Dump to file """
+        file = open(self.filename, "w")
+        file.write(json.dumps(self.dimension_map, cls=NumpyEncoder))
+        file.close()
 
     def load_items_from_file(self):
-        f = open(self.filename, 'r')
-        dimension_map = json.load(f)
+        """ Load items from file """
+        file = open(self.filename, 'r')
+        dimension_map = json.load(file)
 
         for class_ in dimension_map:
             dimension_map[class_]['total'] = np.asarray(dimension_map[class_]['total'])
@@ -57,4 +63,5 @@ class ClassAverages:
         self.dimension_map = dimension_map
 
     def recognized_class(self, class_):
+        """ Recognize class """
         return class_.lower() in self.dimension_map
