@@ -4,18 +4,12 @@ Math auxilary files
 import numpy as np
 
 # using this math: https://en.wikipedia.org/wiki/Rotation_matrix
-def rotation_matrix(yaw, pitch=0, roll=0):
+def rotation_matrix(yaw):
     """ Returns rotation matrix """
-    val_tx = roll
     val_ty = yaw
-    val_tz = pitch
 
-    val_rx = np.array( \
-        [[1, 0, 0], [0, np.cos(val_tx), -np.sin(val_tx)], [0, np.sin(val_tx), np.cos(val_tx)]])
     val_ry = np.array( \
         [[np.cos(val_ty), 0, np.sin(val_ty)], [0, 1, 0], [-np.sin(val_ty), 0, np.cos(val_ty)]])
-    val_rz = np.array( \
-        [[np.cos(val_tz), -np.sin(val_tz), 0], [np.sin(val_tz), np.cos(val_tz), 0], [0, 0, 1]])
 
     return val_ry.reshape([3, 3])
     # return np.dot(np.dot(Rz,Ry), Rx)

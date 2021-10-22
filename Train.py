@@ -5,7 +5,7 @@ This script will train the network
 import os
 
 from torch_lib.Dataset import Dataset
-from torch_lib.Model import Model, OrientationLoss
+from torch_lib.Model import Model, or_loss
 
 import torch
 import torch.nn as nn
@@ -39,7 +39,7 @@ def main():
     opt_sgd = torch.optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
     conf_loss_func = nn.CrossEntropyLoss().cuda()
     dim_loss_func = nn.MSELoss().cuda()
-    orient_loss_func = OrientationLoss
+    orient_loss_func = or_loss
 
     # load any previous weights
     model_path = os.path.abspath(os.path.dirname(__file__)) + '/weights/'

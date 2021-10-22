@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-def OrientationLoss(orient_batch, or_gt_batch, conf_gt_batch):
+def or_loss(orient_batch, or_gt_batch, conf_gt_batch):
     """ Orientation Loss """
     batch_size = orient_batch.size()[0]
     indexes = torch.max(conf_gt_batch, dim=1)[1]
@@ -26,7 +26,7 @@ class Model(nn.Module):
         """ Initialize class """
         super(Model, self).__init__()
         self.bins = bins
-        self.w = weigth
+        self.weight = weigth
         self.features = features
         self.orientation = nn.Sequential(\
             nn.Linear(512 * 7 * 7, 256),\

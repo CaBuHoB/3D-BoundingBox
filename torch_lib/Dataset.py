@@ -9,7 +9,7 @@ import cv2
 from torchvision import transforms
 from torch.utils import data
 
-from library.File import *
+from library.File import get_p, get_calibration_cam_to_image
 
 from .ClassAverages import ClassAverages
 
