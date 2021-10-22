@@ -8,3 +8,5 @@ legacy
 eval/video/2011_09_26
 .idea/
 .vscode/
+__pycache__
+.pytest_cache
