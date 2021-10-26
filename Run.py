@@ -147,7 +147,7 @@ def main():
             try:
                 det_obj = DetectedObject(\
                     img, detection.detected_class, detection.box_2d, calib_file)
-            except ValueError:
+            except Exception:
                 continue
 
             theta_ray = det_obj.theta_ray
