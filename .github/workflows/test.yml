@@ -1,0 +1,21 @@
+name: Test
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Install Conda
+        uses: s-weigand/setup-conda@v1.0.7
+      - name: Install dependencies
+        run: |
+            conda env create --prefix ./env --file environment.yml
+      
+      - name: Run tests
+        run: ./env/bin/python -m unittest discover -s _tests_ -p "*.py" -t .
+        
