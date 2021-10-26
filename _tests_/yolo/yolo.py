@@ -1,25 +1,30 @@
+"""
+test file for yolo
+"""
 import warnings
 import unittest
 import cv2
-from yolo.yolo import cv_Yolo
+from yolo.yolo import CvYolo
 
 
 class YoloTestCase(unittest.TestCase):
-
+    """ class for yolo test """
     def test_invalid_path(self):
+        """ test invalid path """
         invalid_path = 'unexisted_path'
         with self.assertRaises(FileNotFoundError):
-            cv_Yolo(invalid_path)
+            CvYolo(invalid_path)
 
         invalid_path = 0
         with self.assertRaises(TypeError):
-            cv_Yolo(invalid_path)
+            CvYolo(invalid_path)
 
     def test_valid_detections(self):
+        """ test valid detections """
         warnings.simplefilter("ignore")
         valid_path = './weights'
         with self.assertRaises(cv2.error):
-            cv_Yolo(valid_path)
+            CvYolo(valid_path)
 
 
 if __name__ == "__main__":
