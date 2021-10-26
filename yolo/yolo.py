@@ -9,7 +9,7 @@ import os
 import cv2
 import numpy as np
 
-class cv_Yolo:
+class CvYolo:
     """ make initialization"""
     def __init__(self, yolo_path, confidence=0.5, threshold=0.3):
         """ initialization """
