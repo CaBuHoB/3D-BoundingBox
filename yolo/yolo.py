@@ -5,11 +5,13 @@ then get passed into the torch net
 source: https://www.pyimagesearch.com/2018/11/12/yolo-object-detection-with-opencv/
 """
 
-import cv2
-import numpy as np
 import os
+import numpy as np
+import cv2
 
-class cv_Yolo:
+
+class CvYolo:
+    """ class CvYolo"""
 
     def __init__(self, yolo_path, confidence=0.5, threshold=0.3):
         self.confidence = confidence
@@ -19,7 +21,8 @@ class cv_Yolo:
         self.labels = open(labels_path).read().split("\n")
 
         np.random.seed(42)
-        self.colors = np.random.randint(0,255, size=(len(self.labels), 3), dtype="uint8")
+        self.colors = np.random.randint(
+            0, 255, size=(len(self.labels), 3), dtype="uint8")
 
         weights_path = os.path.sep.join([yolo_path, "yolov3.weights"])
         cfg_path = os.path.sep.join([yolo_path, "yolov3.cfg"])
@@ -27,17 +30,20 @@ class cv_Yolo:
         self.net = cv2.dnn.readNetFromDarknet(cfg_path, weights_path)
 
     def detect(self, image):
+        """ detection function """
         # assert image is opencv
-        (H,W) = image.shape[:2]
+        (val_h, val_w) = image.shape[:2]
 
-        ln = self.net.getLayerNames()
-        ln = [ln[i[0] - 1] for i in self.net.getUnconnectedOutLayers()]
+        layer_num = self.net.getLayerNames()
+        layer_num = [layer_num[i[0] - 1]
+                     for i in self.net.getUnconnectedOutLayers()]
 
         # prepare input
-        blob = cv2.dnn.blobFromImage(image, 1 / 255.0, (416, 416), swapRB=True, crop=False)
+        blob = cv2.dnn.blobFromImage(
+            image, 1 / 255.0, (416, 416), swapRB=True, crop=False)
 
         self.net.setInput(blob)
-        output = self.net.forward(ln)
+        outputs = self.net.forward(layer_num)
 
         detections = []
 
@@ -45,7 +51,7 @@ class cv_Yolo:
         confidences = []
         class_ids = []
 
-        for output in output:
+        for output in outputs:
             for detection in output:
                 scores = detection[5:]
                 class_id = np.argmax(scores)
@@ -53,30 +59,31 @@ class cv_Yolo:
 
                 if confidence > self.confidence:
 
-                    box = detection[0:4] * np.array([W, H, W, H])
-                    (centerX, centerY, width, height) = box.astype("int")
+                    box = detection[0:4] * \
+                        np.array([val_w, val_h, val_w, val_h])
+                    (center_x, center_y, width, height) = box.astype("int")
 
                     # use the center (x, y)-coordinates to derive the top and
                     # and left corner of the bounding box
-                    x = int(centerX - (width / 2))
-                    y = int(centerY - (height / 2))
+                    val_x = int(center_x - (width / 2))
+                    val_y = int(center_y - (height / 2))
 
                     # update our list of bounding box coordinates, confidences,
                     # and class IDs
 
-                    boxes.append([x, y, int(width), int(height)])
+                    boxes.append([val_x, val_y, int(width), int(height)])
                     confidences.append(float(confidence))
                     class_ids.append(class_id)
 
-
-
-        idxs = cv2.dnn.NMSBoxes(boxes, confidences, self.confidence, self.threshold)
+        idxs = cv2.dnn.NMSBoxes(
+            boxes, confidences, self.confidence, self.threshold)
 
         if len(idxs) > 0:
             for i in idxs.flatten():
 
                 top_left = (boxes[i][0], boxes[i][1])
-                bottom_right = (top_left[0] + boxes[i][2], top_left[1] + boxes[i][3])
+                bottom_right = (top_left[0] + boxes[i]
+                                [2], top_left[1] + boxes[i][3])
 
                 box_2d = [top_left, bottom_right]
                 class_ = self.get_class(class_ids[i])
@@ -88,11 +95,22 @@ class cv_Yolo:
         return detections
 
     def get_class(self, class_id):
+        """ get class function """
         return self.labels[class_id]
 
 
-
 class Detection:
+    """ class detection"""
+
     def __init__(self, box_2d, class_):
+        """ initialization function """
         self.box_2d = box_2d
         self.detected_class = class_
+
+    def get_box2d(self):
+        """ return box2d """
+        return self.box_2d
+
+    def get_detected_class(self):
+        """ return detected_class """
+        return self.detected_class

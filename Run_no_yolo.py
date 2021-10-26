@@ -4,51 +4,55 @@ but will still use the neural nets to get the 3D position and plot onto the
 image. Press space for next image and escape to quit
 """
 import os
-import cv2
+import sys
 import time
 import argparse
-import torch
 import numpy as np
+import cv2
 
-from torch_lib.Dataset import *
-from library.Math import *
-from library.Plotting import *
+import torch
+from torch_lib.Dataset import Dataset
 from torch_lib import Model, ClassAverages
 from torchvision.models import vgg
+from library.Math import calc_location
+from library.Plotting import plot_2d_box, plot_3d_box
+
+
+
 
 
 # to run car by car
-single_car = False
+SINGLECAR = False
 
-parser = argparse.ArgumentParser()
+PARSER = argparse.ArgumentParser()
 
-parser.add_argument("--dataset-path", default="eval/",
+PARSER.add_argument("--dataset-path", default="eval/",
                     help="Path to directory with dataset")
 
-parser.add_argument("--calib-path", default="camera_cal/calib_cam_to_cam.txt",
+PARSER.add_argument("--calib-path", default="camera_cal/calib_cam_to_cam.txt",
                     help="Path file with calibrating data for camera")
 
-parser.add_argument("--weights-path", default="weights/",
+PARSER.add_argument("--weights-path", default="weights/",
                     help="Path to folder, where weights will be saved. \
                         By default, this is weights/")
 
-parser.add_argument("--imwrite", action="store_true",
+PARSER.add_argument("--imwrite", action="store_true",
                     help="Flag for running the code in the mode of saving images to a folder. \
                         If this flag is used, the files are saved in output_dir. \
                         By default, images are displayed using cv2.imshow.")
 
-parser.add_argument("--output-dir", default="output_dir/",
+PARSER.add_argument("--output-dir", default="output_dir/",
                     help="If the imwrite flag is True, the images will be saved to this directory. \
                         By default, this is output_dir/")
 
-parser.add_argument("--device", default="cuda",
+PARSER.add_argument("--device", default="cuda",
                     help="PyTorch device: cuda/cpu")
 
 
 def plot_regressed_3d_bbox(img, truth_img, cam_to_img, box_2d, dimensions, alpha, theta_ray):
-
+    """ plot regressed 3d box """
     # the math! returns X, the corners used for constraint
-    location, X = calc_location(
+    location, _ = calc_location(
         dimensions, cam_to_img, box_2d, alpha, theta_ray)
 
     orient = alpha + theta_ray
@@ -60,29 +64,29 @@ def plot_regressed_3d_bbox(img, truth_img, cam_to_img, box_2d, dimensions, alpha
 
 
 def main():
+    """ main """
+    flags = PARSER.parse_args()
 
-    FLAGS = parser.parse_args()
+    device = flags.device
 
-    device = FLAGS.device
+    if flags.imwrite:
+        os.makedirs(flags.output_dir, exist_ok=True)
 
-    if FLAGS.imwrite:
-        os.makedirs(FLAGS.output_dir, exist_ok=True)
-
-    weights_path = FLAGS.weights_path
+    weights_path = flags.weights_path
     model_lst = [x for x in sorted(os.listdir(weights_path)) if x.endswith('.pkl')]
     if len(model_lst) == 0:
         print('No previous model found, please train first!')
-        exit()
+        sys.exit()
     else:
         print('Using previous model %s' % model_lst[-1])
         my_vgg = vgg.vgg19_bn(pretrained=True)
         model = Model.Model(features=my_vgg.features, bins=2).to(device)
-        checkpoint = torch.load(os.path.join(weights_path, model_lst[-1]))
+        checkpoint = torch.load(os.path.join(weights_path, model_lst[-1]), map_location=torch.device(device))
         model.load_state_dict(checkpoint['model_state_dict'])
         model.eval()
 
     # defaults to /eval
-    dataset = Dataset(FLAGS.dataset_path, FLAGS.calib_path)
+    dataset = Dataset(flags.dataset_path, flags.calib_path)
     averages = ClassAverages.ClassAverages()
 
     all_images = dataset.all_objects()
@@ -97,10 +101,10 @@ def main():
         objects = data['Objects']
         cam_to_img = data['Calib']
 
-        for i, detectedObject in enumerate(objects):
-            label = detectedObject.label
-            theta_ray = detectedObject.theta_ray
-            input_img = detectedObject.img
+        for i, detected_obj in enumerate(objects):
+            label = detected_obj.label
+            theta_ray = detected_obj.theta_ray
+            input_img = detected_obj.img
 
             input_tensor = torch.zeros([1, 3, 224, 224]).to(device)
             input_tensor[0, :, :, :] = input_img
@@ -121,33 +125,34 @@ def main():
             alpha += dataset.angle_bins[argmax]
             alpha -= np.pi
 
-            location = plot_regressed_3d_bbox(img, truth_img, cam_to_img, label['Box_2D'], dim, alpha, theta_ray)
+            location = plot_regressed_3d_bbox(\
+                img, truth_img, cam_to_img, label['Box_2D'], dim, alpha, theta_ray)
 
             print('Estimated pose: %s' % location)
             print('Truth pose: %s' % label['Location'])
             print('-------------')
 
             # plot car by car
-            if not single_car:
+            if not SINGLECAR:
                 continue
             numpy_vertical = np.concatenate((truth_img, img), axis=0)
-            if not FLAGS.imwrite:
+            if not flags.imwrite:
                 cv2.imshow('2D detection on top, 3D prediction on bottom', numpy_vertical)
                 cv2.waitKey(1)
             else:
-                cv2.imwrite(os.path.join(FLAGS.output_dir, f'im_sc_{key}_{i}.jpg'), numpy_vertical)
-                    
+                cv2.imwrite(os.path.join(flags.output_dir, f'im_sc_{key}_{i}.jpg'), numpy_vertical)
+
         print('Got %s poses in %.3f seconds\n' % (len(objects), time.time() - start_time))
 
         # plot image by image
-        if single_car:
+        if SINGLECAR:
             continue
         numpy_vertical = np.concatenate((truth_img, img), axis=0)
-        if not FLAGS.imwrite:
+        if not flags.imwrite:
             cv2.imshow('2D detection on top, 3D prediction on bottom', numpy_vertical)
             cv2.waitKey(1)
         else:
-            cv2.imwrite(os.path.join(FLAGS.output_dir, f'im_sc_{key}.jpg'), numpy_vertical) 
+            cv2.imwrite(os.path.join(flags.output_dir, f'im_sc_{key}.jpg'), numpy_vertical)
 
 
 if __name__ == '__main__':

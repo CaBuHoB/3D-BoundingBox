@@ -1,3 +1,3 @@
 #!/bin/bash -x
 
-python Run.py --video --hide-debug
+python Run.py --video --hide-debug --device=cpu
