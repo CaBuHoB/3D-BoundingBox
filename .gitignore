@@ -10,3 +10,4 @@ eval/video/2011_09_26
 .vscode/
 __pycache__
 .pytest_cache
+env
