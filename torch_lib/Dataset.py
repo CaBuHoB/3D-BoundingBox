@@ -30,7 +30,7 @@ class Dataset(data.Dataset):
         # use a relative path instead?
 
         # TODO: which camera cal to use, per frame or global one?
-        self.proj_matrix = get_P(calib_path)
+        self.proj_matrix = get_p(calib_path)
 
         self.ids = [x.split('.')[0] for x in sorted(os.listdir(self.top_img_path))] # name of file
         self.num_images = len(self.ids)
@@ -254,7 +254,7 @@ class DetectedObject:
     def __init__(self, img, detection_class, box_2d, proj_matrix, label=None):
 
         if isinstance(proj_matrix, str): # filename
-            proj_matrix = get_P(proj_matrix)
+            proj_matrix = get_p(proj_matrix)
             # proj_matrix = get_calibration_cam_to_image(proj_matrix)
 
         self.proj_matrix = proj_matrix

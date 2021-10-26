@@ -2,7 +2,7 @@ import unittest
 import os
 import warnings
 import numpy as np
-from library.File import get_calibration_cam_to_image, get_P, get_R0
+from library.File import get_calibration_cam_to_image, get_p, get_r0
 
 
 class CabFileTestCase(unittest.TestCase):
@@ -42,7 +42,7 @@ class CabFileTestCase(unittest.TestCase):
     def test_get_P_filetype2(self):
         warnings.simplefilter("ignore")
         
-        output = get_P(self.path_to_fake_file_type_2)
+        output = get_p(self.path_to_fake_file_type_2)
         valid_output_type_2 = np.array([[0, 5, 10, 15],
                                         [1, 2, 3, 4],
                                         [6, 7, 8, 9]])
@@ -51,7 +51,7 @@ class CabFileTestCase(unittest.TestCase):
     def test_get_P_filetype1(self):
         warnings.simplefilter("ignore")
         
-        output = get_P(self.path_to_fake_file_type_1)
+        output = get_p(self.path_to_fake_file_type_1)
         valid_output_type_1 = np.array([[1, 2, 3, 4],
                                         [5, 6, 7, 8],
                                         [9, 10, 11, 12]])
@@ -61,7 +61,7 @@ class CabFileTestCase(unittest.TestCase):
     def test_get_R0(self):
         warnings.simplefilter("ignore")
 
-        output = get_R0(self.path_to_fake_file_type_3)
+        output = get_r0(self.path_to_fake_file_type_3)
         valid_output = np.array([[1, 2, 3, 0],
                                 [4, 5, 6, 0],
                                 [7, 8, 9, 0],
