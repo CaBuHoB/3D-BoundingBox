@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 
 from torch_lib.Dataset import Dataset
-from torch_lib.Model import Model, OrientationLoss
+from torch_lib.Model import Model, orientation_loss
 from torchvision.models import vgg
 from torch.utils import data
 
@@ -56,7 +56,7 @@ def main():
     opt_sgd = torch.optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
     conf_loss_func = nn.CrossEntropyLoss().to(device)
     dim_loss_func = nn.MSELoss().to(device)
-    orient_loss_func = OrientationLoss
+    orient_loss_func = orientation_loss
 
     # load any previous weights
     model_path = flags.weights_path
