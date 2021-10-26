@@ -8,7 +8,7 @@ wget https://s3.eu-central-1.amazonaws.com/avg-kitti/data_object_label_2.zip -O 
 echo "Uncompressing dataset ..."
 unzip -u Kitti/DOI.zip -d Kitti/
 unzip -u Kitti/DOC.zip -d Kitti/
-unzip -u Kitti/DOI.zip -d Kitti/
+unzip -u Kitti/DOL.zip -d Kitti/
 
 echo "Remove dataset zips ..."
 rm Kitti/DOI.zip 

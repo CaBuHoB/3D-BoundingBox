@@ -39,7 +39,7 @@ if [[ -n "$CALIB_PATH" ]]; then
 fi
 
 if [[ "${MODE,,}" == "eval" || "${MODE,,}" == "eval_no_yolo" ]] && [[ -n "$IMWRITE" ]]; then
-    RUN_COMMAND="${RUN_COMMAND} --imwrite=${IMWRITE}"
+    RUN_COMMAND="${RUN_COMMAND} --imwrite"
 fi
 
 if [[ "${MODE,,}" == "eval" || "${MODE,,}" == "eval_no_yolo" ]] && [[ -n "$OUTPUT_DIR" ]]; then
