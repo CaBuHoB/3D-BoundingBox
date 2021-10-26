@@ -5,13 +5,14 @@ then get passed into the torch net
 source: https://www.pyimagesearch.com/2018/11/12/yolo-object-detection-with-opencv/
 """
 
+import os
 import cv2
 import numpy as np
-import os
 
 class cv_Yolo:
-
+    """ make initialization"""
     def __init__(self, yolo_path, confidence=0.5, threshold=0.3):
+        """ initialization """
         self.confidence = confidence
         self.threshold = threshold
 
@@ -19,7 +20,7 @@ class cv_Yolo:
         self.labels = open(labels_path).read().split("\n")
 
         np.random.seed(42)
-        self.colors = np.random.randint(0,255, size=(len(self.labels), 3), dtype="uint8")
+        self.colors = np.random.randint(0, 255, size=(len(self.labels), 3), dtype="uint8")
 
         weights_path = os.path.sep.join([yolo_path, "yolov3.weights"])
         cfg_path = os.path.sep.join([yolo_path, "yolov3.cfg"])
@@ -27,17 +28,18 @@ class cv_Yolo:
         self.net = cv2.dnn.readNetFromDarknet(cfg_path, weights_path)
 
     def detect(self, image):
+        """ implements detection """
         # assert image is opencv
-        (H,W) = image.shape[:2]
+        (height, width) = image.shape[:2]
 
-        ln = self.net.getLayerNames()
-        ln = [ln[i[0] - 1] for i in self.net.getUnconnectedOutLayers()]
+        layer_names = self.net.getLayerNames()
+        layer_names = [layer_names[i[0] - 1] for i in self.net.getUnconnectedOutLayers()]
 
         # prepare input
         blob = cv2.dnn.blobFromImage(image, 1 / 255.0, (416, 416), swapRB=True, crop=False)
 
         self.net.setInput(blob)
-        output = self.net.forward(ln)
+        output = self.net.forward(layer_names)
 
         detections = []
 
@@ -53,18 +55,18 @@ class cv_Yolo:
 
                 if confidence > self.confidence:
 
-                    box = detection[0:4] * np.array([W, H, W, H])
-                    (centerX, centerY, width, height) = box.astype("int")
+                    box = detection[0:4] * np.array([width, height, width, height])
+                    (center_x, center_y, width, height) = box.astype("int")
 
                     # use the center (x, y)-coordinates to derive the top and
                     # and left corner of the bounding box
-                    x = int(centerX - (width / 2))
-                    y = int(centerY - (height / 2))
+                    val_x = int(center_x - (width / 2))
+                    val_y = int(center_y - (height / 2))
 
                     # update our list of bounding box coordinates, confidences,
                     # and class IDs
 
-                    boxes.append([x, y, int(width), int(height)])
+                    boxes.append([val_x, val_y, int(width), int(height)])
                     confidences.append(float(confidence))
                     class_ids.append(class_id)
 
@@ -88,11 +90,14 @@ class cv_Yolo:
         return detections
 
     def get_class(self, class_id):
+        """ get class (labels) """
         return self.labels[class_id]
 
 
 
 class Detection:
+    """ class for detection initialization """
     def __init__(self, box_2d, class_):
+        """ initialization """
         self.box_2d = box_2d
         self.detected_class = class_

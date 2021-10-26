@@ -20,7 +20,7 @@ from torch_lib.Dataset import DetectedObject, generate_bins
 from torch_lib import Model, ClassAverages
 from library.Math import calc_location
 from library.Plotting import plot_2d_box, plot_3d_box
-from yolo.yolo import cv_Yolo
+from yolo.yolo import CvYolo
 
 
 def str2bool(v_str):
@@ -87,7 +87,7 @@ def main():
 
     # load yolo
     yolo_path = os.path.abspath(os.path.dirname(__file__)) + '/weights'
-    yolo = cv_Yolo(yolo_path)
+    yolo = CvYolo(yolo_path)
 
     averages = ClassAverages.ClassAverages()
 
