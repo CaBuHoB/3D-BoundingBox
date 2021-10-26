@@ -1,0 +1,38 @@
+name: Test. Build. Push
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Install Conda
+        uses: s-weigand/setup-conda@v1.0.7
+      - name: Install dependencies
+        run: |
+            conda env create --prefix ./env --file environment.yml
+            conda activate 3dboundingbox
+      
+      - name: Run tests
+        run: python -m unittest discover -s _tests_ -p "*.py" -t .
+        
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: .
+          push: true
+          tags: latest
+          labels: cabuhob/3dboundingbox
