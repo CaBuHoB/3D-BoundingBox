@@ -25,17 +25,14 @@ def generate_bins(bins):
 
 class Dataset(data.Dataset):
     """ Dataset class """
-    def __init__(self, path, bins=2, overlap=0.1):
-        """ initialization """
+    def __init__(self, path, calib_path, bins=2, overlap=0.1):
+        """ Class initialization """
         self.top_label_path = path + "/label_2/"
         self.top_img_path = path + "/image_2/"
         self.top_calib_path = path + "/calib/"
         # use a relative path instead?
 
-        self.proj_matrix = get_p(\
-            os.path.abspath(\
-                os.path.dirname(\
-                    os.path.dirname(__file__)) + '/camera_cal/calib_cam_to_cam.txt'))
+        self.proj_matrix = get_P(calib_path)
 
         self.ids = [x.split('.')[0] for x in sorted(os.listdir(self.top_img_path))] # name of file
         self.num_images = len(self.ids)
