@@ -108,8 +108,8 @@ def main():
     if flags.video and flags.dataset_path == "eval/image_2/":
         img_path = "eval/video/2011_09_26/image_2/"
 
-    if FLAGS.imwrite:
-        os.makedirs(FLAGS.output_dir, exist_ok=True)
+    if flags.imwrite:
+        os.makedirs(flags.output_dir, exist_ok=True)
 
     # using P_rect from global calibration file
     calib_file = flags.calib_path

@@ -269,7 +269,7 @@ class Dataset(data.Dataset):
         """ all objects """
         val_data = {}
         for it_id in self.ids:
-            val_data[id] = {}
+            val_data[it_id] = {}
             img_path = self.top_img_path + '%s.png'%it_id
             img = cv2.imread(img_path)
             val_data[it_id]['Image'] = img
