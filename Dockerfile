@@ -1,8 +1,8 @@
 FROM nvidia/cuda:11.0.3-base-ubuntu20.04
 
 # Install conda
-ENV PATH="/root/miniconda3/bin:${PATH}"
-ARG PATH="/root/miniconda3/bin:${PATH}"
+ENV PATH="env/bin/:/root/miniconda3/bin:${PATH}"
+ARG PATH="env/bin/:/root/miniconda3/bin:${PATH}"
 
 RUN apt-get update \
     && apt-get install -y wget libgl1-mesa-glx \

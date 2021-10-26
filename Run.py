@@ -91,7 +91,7 @@ def main():
         my_vgg = vgg.vgg19_bn(pretrained=True)
         # TODO: load bins from file or something
         model = Model.Model(features=my_vgg.features, bins=2).to(device)
-        checkpoint = torch.load(os.path.join(weights_path, model_lst[-1]))
+        checkpoint = torch.load(os.path.join(weights_path, model_lst[-1]), map_location=torch.device(device))
         model.load_state_dict(checkpoint['model_state_dict'])
         model.eval()
 
@@ -107,7 +107,7 @@ def main():
     if FLAGS.video and FLAGS.dataset_path == "eval/image_2/":
         img_path = "eval/video/2011_09_26/image_2/"
 
-    if FLAGS.output_dir:
+    if FLAGS.imwrite:
         os.makedirs(FLAGS.output_dir, exist_ok=True)
 
     # using P_rect from global calibration file
