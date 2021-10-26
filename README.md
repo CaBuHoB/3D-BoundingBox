@@ -29,9 +29,9 @@ cd 3D-BoundingBox/
 
 Build docker or pull from Docker Hub:
 
-a. ```docker build . -t 3dboundingbox```
+a. ```docker build . -t cabuhob/3dboundingbox:master```
 
-b. ```docker pull cabuhob/3dboundingbox```
+b. ```docker pull cabuhob/3dboundingbox:master```
 
 Dowload weights and test data by executing the following file
 ```bash
@@ -51,7 +51,7 @@ docker run --rm -it \
     --gpus=all \
     -e DATASET_PATH=/eval/ \
     -v ${PWD}/eval/video/2011_09_26/image_2/:/eval/ \
-    3dboundinbox
+    cabuhob/3dboundingbox:master
 ```
 
 Run docker with CPU:
@@ -66,7 +66,7 @@ docker run --rm -it \
     -e WEIGHTS_PATH=/weights/ \
     -e DATASET_PATH=/eval/ \
     -v ${PWD}/eval/video/2011_09_26/image_2/:/eval/ \
-    3dboundinbox
+    cabuhob/3dboundingbox:master
 ```
 
 Generated images will appear in the folder ```${PWD}/output/```
@@ -90,7 +90,7 @@ docker run --rm -it \
     -e WEIGHTS_PATH=/weights/ \
     --gpus=all \
     -e DATASET_PATH=/data/ \
-    3dboundinbox
+    cabuhob/3dboundingbox:master
 ```
 
 Run docker with CPU:
@@ -102,7 +102,7 @@ docker run --rm -it \
     -e DEVICE=cpu \
     -e WEIGHTS_PATH=/weights/ \
     -e DATASET_PATH=/data/ \
-    3dboundinbox
+    cabuhob/3dboundingbox:master
 ```
 
 ## Using without docker
@@ -110,7 +110,7 @@ docker run --rm -it \
 You can use [Conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html) for fast environment creation with all dependencies.
 For that run
 ```bash
-conda env create --prefix ./env --file environment.yml
+conda env create --file environment.yml
 conda activate 3dboundingbox
 ```
 
