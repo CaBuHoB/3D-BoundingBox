@@ -1,45 +1,49 @@
+"""
+Train script
+"""
+
 import os
 import argparse
 import torch
 import torch.nn as nn
 
-from torch_lib.Dataset import *
-from torch_lib.Model import Model, OrientationLoss
+from torch_lib.Dataset import Dataset
+from torch_lib.Model import Model, orientation_loss
 from torchvision.models import vgg
 from torch.utils import data
 
 
-parser = argparse.ArgumentParser()
+PARSER = argparse.ArgumentParser()
 
-parser.add_argument("--dataset-path", default="Kitti/training",
+PARSER.add_argument("--dataset-path", default="Kitti/training",
                     help="Path to directory with dataset")
 
-parser.add_argument("--calib-path", default="camera_cal/calib_cam_to_cam.txt",
+PARSER.add_argument("--calib-path", default="camera_cal/calib_cam_to_cam.txt",
                     help="Path file with calibrating data for camera")
 
-parser.add_argument("--weights-path", default="weights/",
+PARSER.add_argument("--weights-path", default="weights/",
                     help="Path to folder, where weights will be saved. \
                         By default, this is weights/")
 
-parser.add_argument("--device", default="cuda",
+PARSER.add_argument("--device", default="cuda",
                     help="PyTorch device: cuda/cpu")
 
 
 def main():
+    """ main function """
+    flags = PARSER.parse_args()
 
-    FLAGS = parser.parse_args()
-
-    device = FLAGS.device
+    device = flags.device
 
     # hyper parameters
     epochs = 100
     batch_size = 8
     alpha = 0.6
-    w = 0.4
+    weights = 0.4
 
     print("Loading all detected objects in dataset...")
 
-    dataset = Dataset(FLAGS.dataset_path, FLAGS.calib_path)
+    dataset = Dataset(flags.dataset_path, flags.calib_path)
 
     params = {'batch_size': batch_size,
               'shuffle': True,
@@ -49,13 +53,13 @@ def main():
 
     my_vgg = vgg.vgg19_bn(pretrained=True)
     model = Model(features=my_vgg.features).to(device)
-    opt_SGD = torch.optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
+    opt_sgd = torch.optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
     conf_loss_func = nn.CrossEntropyLoss().to(device)
     dim_loss_func = nn.MSELoss().to(device)
-    orient_loss_func = OrientationLoss
+    orient_loss_func = orientation_loss
 
     # load any previous weights
-    model_path = FLAGS.weights_path
+    model_path = flags.weights_path
     latest_model = None
     first_epoch = 0
     if not os.path.isdir(model_path):
@@ -63,13 +67,13 @@ def main():
     else:
         try:
             latest_model = [x for x in sorted(os.listdir(model_path)) if x.endswith('.pkl')][-1]
-        except:
+        except ValueError:
             pass
 
     if latest_model is not None:
         checkpoint = torch.load(os.path.join(model_path, latest_model))
         model.load_state_dict(checkpoint['model_state_dict'])
-        opt_SGD.load_state_dict(checkpoint['optimizer_state_dict'])
+        opt_sgd.load_state_dict(checkpoint['optimizer_state_dict'])
         first_epoch = checkpoint['epoch']
         loss = checkpoint['loss']
 
@@ -96,15 +100,16 @@ def main():
             truth_conf = torch.max(truth_conf, dim=1)[1]
             conf_loss = conf_loss_func(conf, truth_conf)
 
-            loss_theta = conf_loss + w * orient_loss
+            loss_theta = conf_loss + weights * orient_loss
             loss = alpha * dim_loss + loss_theta
 
-            opt_SGD.zero_grad()
+            opt_sgd.zero_grad()
             loss.backward()
-            opt_SGD.step()
+            opt_sgd.step()
 
             if passes % 10 == 0:
-                print("--- epoch %s | batch %s/%s --- [loss: %s]" % (epoch, curr_batch, total_num_batches, loss.item()))
+                print("--- epoch {} | batch {}/{} --- [loss: {}]"\
+                    .format(epoch, curr_batch, total_num_batches, loss.item()))
                 passes = 0
 
             passes += 1
@@ -119,7 +124,7 @@ def main():
             torch.save({
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': opt_SGD.state_dict(),
+                'optimizer_state_dict': opt_sgd.state_dict(),
                 'loss': loss
             }, name)
             print("====================")
