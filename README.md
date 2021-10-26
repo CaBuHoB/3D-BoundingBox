@@ -1,64 +1,158 @@
 # 3D Bounding Box Estimation Using Deep Learning and Geometry
-If interested, join the slack workspace where the paper is discussed, issues are worked through, and more! Click this [link](https://join.slack.com/t/3dboundingbox-oun9186/shared_invite/enQtNDk4Njg2NzYyNzY5LWVlZWRlMjNhZmZlYjVmNGY3NWVlNDA4MmY2ZWQ3ZmUyY2Q4OWIxMmY4NzU4YmViM2ViZWI5YjgxOTIyOTI4ZjI) to join.
 
-## Introduction
-PyTorch implementation for this [paper](https://arxiv.org/abs/1612.00496).
+This repository is not an original official implementation of the work, but a refactored codebase. Performed within the FSE coursework at Skoltech.
+
+## Description
+The code is a PyTorch implementation for this [paper](https://arxiv.org/abs/1612.00496).
 
 ![example-image](http://soroushkhadem.com/img/2d-top-3d-bottom1.png)
 
 At the moment, it takes approximately 0.4s per frame, depending on the number of objects
-detected. An improvement will be speed upgrades soon. Here is the current fastest possible:
+detected. The speed will be improved soon. Here is the current fastest possible:
+
 ![example-video](eval/example/3d-bbox-vid.gif)
 
+# Quickstart
+
+Use quickstart to test the model on default data using pre-trained weights.
+
 ## Requirements
-- PyTorch
-- Cuda
-- OpenCV >= 3.4.3
+- [Docker](https://docs.docker.com/engine/install/ubuntu/)
+- [CUDA](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) (optional)
 
-## Usage
-In order to download the weights:
+## Launch
+Clone this repository and enter the directory using the commands below:
 ```
-cd weights/
-./get_weights.sh
+git clone https://github.com/CaBuHoB/3D-BoundingBox.git
+cd 3D-BoundingBox/
 ```
-This will download pre-trained weights for the 3D BoundingBox net and also YOLOv3 weights from the
-official yolo [source](https://pjreddie.com/darknet/yolo/).
 
->If script is not working: [pre trained weights](https://drive.google.com/open?id=1yEiquJg9inIFgR3F-N5Z3DbFnXJ0aXmA) and 
-[YOLO weights](https://pjreddie.com/media/files/yolov3.weights)
+Build docker or pull from Docker Hub:
 
-To see all the options:
+a. ```docker build . -t 3dboundingbox```
+
+b. ```docker pull cabuhob/3dboundingbox```
+
+Dowload weights and test data by executing the following file
+```bash
+./scripts/download_test.sh
 ```
+
+Run docker with CUDA:
+```bash
+docker run --rm -it \
+    -v ${PWD}/weights/:/weights/ \
+    -v ${PWD}/output/:/output/ \
+    -e MODE=eval \
+    -e IMWRITE=1 \
+    -e OUTPUT_DIR=/output/ \
+    -e DEVICE=cuda \
+    -e WEIGHTS_PATH=/weights/ \
+    --gpus=all \
+    -e DATASET_PATH=/eval/ \
+    -v ${PWD}/eval/video/2011_09_26/image_2/:/eval/ \
+    3dboundinbox
+```
+
+Run docker with CPU:
+```bash
+docker run --rm -it \
+    -v ${PWD}/weights/:/weights/ \
+    -v ${PWD}/output/:/output/ \
+    -e MODE=eval \
+    -e IMWRITE=1 \
+    -e OUTPUT_DIR=/output/ \
+    -e DEVICE=cpu \
+    -e WEIGHTS_PATH=/weights/ \
+    -e DATASET_PATH=/eval/ \
+    -v ${PWD}/eval/video/2011_09_26/image_2/:/eval/ \
+    3dboundinbox
+```
+
+Generated images will appear in the folder ```${PWD}/output/```
+
+# Development
+
+## Train
+
+To train the model Dowload train data by executing the following file
+```bash
+./scripts/download_train.sh
+```
+
+Run docker with CUDA:
+```bash
+docker run --rm -it \
+    -v ${PWD}/weights/:/weights/ \
+    -v ${PWD}/Kitti/training/:/data/ \
+    -e MODE=train \
+    -e DEVICE=cuda \
+    -e WEIGHTS_PATH=/weights/ \
+    --gpus=all \
+    -e DATASET_PATH=/data/ \
+    3dboundinbox
+```
+
+Run docker with CPU:
+```bash
+docker run --rm -it \
+    -v ${PWD}/weights/:/weights/ \
+    -v ${PWD}/Kitti/training/:/data/ \
+    -e MODE=train \
+    -e DEVICE=cpu \
+    -e WEIGHTS_PATH=/weights/ \
+    -e DATASET_PATH=/data/ \
+    3dboundinbox
+```
+
+## Using without docker
+
+You can use [Conda](https://conda.io/projects/conda/en/latest/user-guide/install/index.html) for fast environment creation with all dependencies.
+For that run
+```bash
+conda env create --prefix ./env --file environment.yml
+conda activate 3dboundingbox
+```
+
+To see all the options run
+```bash
 python Run.py --help
 ```
 
+
+
+### All arguments for running the model
+
+|                 Running files                |    Argument    | Docker argument |                                                                                     Description                                                                                    |
+|:------------------------------:|:--------------------:|:---------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| Run.py<br>Run_no_yolo.py<br>Train.py | \-\-dataset-path |   DATASET_PATH  |                                                                          Path to directory with dataset                                                                         |
+| Run.py<br>Run_no_yolo.py<br>Train.py |  \-\-calib-path  |    CALIB_PATH   |                                                                    Path file with calibrating data for camera                                                                   |
+| Run.py<br>Run_no_yolo.py<br>Train.py | \-\-weights-path |   WEIGHTS_PATH  |                                                    Path to folder, where weights will be saved. By default, this is weights/                                                    |
+| Run.py<br>Run_no_yolo.py<br>Train.py |    \-\-device    |      DEVICE     |                                                                             PyTorch device: cuda(default)/cpu                                                                            |
+|         Run.py<br>Run_no_yolo.py        |  \-\-output-dir  |    OUTPUT_DIR   |                                     If the imwrite flag is True, the images will be saved to this directory. By default, this is output_dir/                                    |
+|         Run.py<br>Run_no_yolo.py        |    \-\-imwrite   |     IMWRITE     | Flag for running the code in the mode of saving images to a folder. If this flag is used, the files are saved in output_dir. By default, images are displayed using cv2.imshow. |
+|                Run.py                |  \-\-hide-debug  |    HIDE_DEBUG   |                                                              Show the 2D BoundingBox detecions on a separate image                                                              |
+|                Run.py                |   \-\-show-yolo  |    SHOW_YOLO    |                                                                     Supress the printing of each 3d location                                                                    |
+|                Run.py                |     \-\-video    |      VIDEO      |                                Weather or not to advance frame-by-frame as fast as possible. By default, this will pull images from ./eval/video                                |
+
+## Examples 
+Train the model
+```bash
+python Train.py --device=cpu
+```
 Run through all images in default directory (eval/image_2/), optionally with the 2D
 bounding boxes also drawn. Press SPACE to proceed to next image, and any other key to exit.
+```bash
+python Run.py --device=cpu [--show-yolo]
 ```
-python Run.py [--show-yolo]
-```
->Note: See [training](#training) for where to download the data from
 
 There is also a script provided to download the default video from Kitti in ./eval/video. Or,
 download any Kitti video and corresponding calibration and use `--image-dir` and `--cal-dir` to
 specify where to get the frames from.
-```
-python Run.py --video [--hide-debug]
+```bash
+python Run.py --video --device=cpu [--hide-debug]
 ```
 
-## Training
-First, the data must be downloaded from [Kitti](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=2d).
-Download the left color images, the training labels, and the camera calibration matrices. Total is ~13GB.
-Unzip the downloads into the Kitti/ directory.
-
-```
-python Train.py
-```
-By default, the model is saved every 10 epochs in weights/.
-The loss is printed every 10 batches. The loss should not converge to 0! The loss function for
-the orientation is driven to -1, so a negative loss is expected. The hyper-parameters to tune
-are alpha and w (see paper). I obtained good results after just 10 epochs, but the training
-script will run until 100.
 
 ## How it works
 The PyTorch neural net takes in images of size 224x224 and predicts the orientation and
@@ -68,12 +162,5 @@ Using the orientation, dimension, and 2D bounding box, the 3D location is calcul
 back projected onto the image.
 
 There are 2 key assumptions made:
-1. The 2D bounding box fits very tightly around the object
-2. The object has ~0 pitch and ~0 roll (valid for cars on the road)
-
-## Future Goals
-- Train custom YOLO net on the Kitti dataset
-- Some type of Pose visualization (ROS?)
-
-## Credit
-I originally started from a fork of this [repo](https://github.com/fuenwang/3D-BoundingBox), and some of the original code still exists in the training script.
+1. The 2D bounding box fits very tightly around the object;
+2. The object has ~0 pitch and ~0 roll (valid for cars on the road).
